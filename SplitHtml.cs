@@ -286,7 +286,14 @@ namespace HtmlTool
                 var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
                 if (attri.Count() == 2)
                 {
-                    ret.attris.Add(attri[0], attri[1]);
+                    if (ret.attris.ContainsKey(attri[0]))
+                    {
+                        ret.attris[attri[0]] += " " + attri[1];
+                    }
+                    else
+                    {
+                        ret.attris.Add(attri[0], attri[1]);
+                    }
                 }
             }
             return ret;
@@ -312,7 +319,14 @@ namespace HtmlTool
                 var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
                 if (attri.Count() == 2)
                 {
-                    ret.attris.Add(attri[0], attri[1]);
+                    if (ret.attris.ContainsKey(attri[0]))
+                    {
+                        ret.attris[attri[0]] += " " + attri[1];
+                    }
+                    else
+                    {
+                        ret.attris.Add(attri[0], attri[1]);
+                    }
                 }
             }
             return ret;
@@ -344,7 +358,14 @@ namespace HtmlTool
                 var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
                 if (attri.Count() == 2)
                 {
-                    tag.attris.Add(attri[0], attri[1]);
+                    if (tag.attris.ContainsKey(attri[0]))
+                    {
+                        tag.attris[attri[0]] += " " + attri[1];
+                    }
+                    else
+                    {
+                        tag.attris.Add(attri[0], attri[1]);
+                    }
                 }
             }
             if (!content.Contains('<'))
