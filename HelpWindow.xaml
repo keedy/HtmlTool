@@ -1,8 +1,0 @@
-﻿<Window x:Class="HtmlTool.HelpWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="抠一抠" Height="400" Width="500" xmlns:my="clr-namespace:HtmlTool" WindowStyle="ToolWindow">
-    <Grid>
-        <my:HTMLTree Margin="5" x:Name="hTMLTree1" VerticalAlignment="Center" HorizontalAlignment="Center" Height="350" Width="460"/>
-    </Grid>
-</Window>
