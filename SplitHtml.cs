@@ -14,21 +14,17 @@ namespace HtmlTool
         {
             OpenHeads = new List<string>() { "meta", "br","!--","link","!DOCTYPE" };
         }
-        //static string PosFirstHead(int start,out int end,string htmlInput)
-        //{
-
-        //}
-        //static string PosFirstEnd(int start,out int end,string htmlInput)
-        //{
-
-        //}
+        public SplitHtml(string htmlOrgCode)
+        {
+            this.HTMLCode=htmlOrgCode;
+        }
         static bool IsHead(int headStart,string htmlInput,string headName)
         {
             if (htmlInput[headStart] != '<')
                 return false;
             for (int i = 1; i <= headName.Length; i++)
             {
-                if(htmlInput[headStart+i]!=headName[i-1])
+                if(htmlInput[headStart+i].ToString().ToLower()!=headName[i-1].ToString().ToLower())
                 {
                     return false;
                 }
@@ -46,7 +42,7 @@ namespace HtmlTool
 
             for(int i=0;i<end.Length;i++)
             {
-                if(htmlInput[endStart+i].ToString().ToLower()!=end[i].ToString())
+                if(htmlInput[endStart+i].ToString().ToLower()!=end[i].ToString().ToLower())
                 {
                     return false;
                 }
@@ -59,8 +55,8 @@ namespace HtmlTool
             {
                 throw new Exception("输入网页内容为空！请检查网址格式，或者你在耍我？！");
             }
-            var index=htmlInput.IndexOf("<" + head + " ",start);
-            var index1 = htmlInput.IndexOf("<" + head + ">", start);
+            var index=htmlInput.ToLower().IndexOf("<" + head.ToLower() + " ",start);
+            var index1 = htmlInput.ToLower().IndexOf("<" + head.ToLower() + ">", start);
             if(index==-1&&index1==-1)
             {
                 end = index;
@@ -79,10 +75,10 @@ namespace HtmlTool
         }
         static int PosFirstEnd(int start, string htmlInput,string head)
         {
-            var index = htmlInput.IndexOf("</" + head + ">",start);
+            var index = htmlInput.ToLower().IndexOf("</" + head.ToLower() + ">",start);
             if(index==-1)
             {
-                index = htmlInput.IndexOf("</" + head.ToUpper() + ">", start);
+                index = htmlInput.ToLower().IndexOf("</" + head.ToLower() + ">", start);
                 if (index == -1)
                     return index;
                 else
@@ -95,11 +91,11 @@ namespace HtmlTool
             //注释
             if (tag == "!--")
             {
-                var comment = new Regex(@"<!-- .+-->").Match(htmlInput, start);
+                var comment = new Regex(@"<!-- (.+)-->").Match(htmlInput, start);
                 if(comment.Success)
                 {
                     end = comment.Index + comment.Length - 1;
-                    return comment.Value;
+                    return comment.Groups[1].Value;
                 }
                 else
                 {
@@ -120,7 +116,7 @@ namespace HtmlTool
                 end = PosFirstEnd(start + 1, htmlInput, tag);
                 if(end!=-1)
                 {
-                    return htmlInput.Substring(start - head.Length + 1, end - start + head.Length);
+                    return htmlInput.Substring(start +1, end - start -9);
                 }
                 else
                 {
@@ -151,7 +147,7 @@ namespace HtmlTool
                     if (level == 0)
                     {
                         end = PosFirstEnd(index, htmlInput, tag);
-                        return htmlInput.Substring(start - head.Length + 1, end - start + head.Length);
+                        return htmlInput.Substring(start + 1, end - start - tag.Length - 3);
                     }
                     else
                     {
@@ -162,314 +158,123 @@ namespace HtmlTool
                 index += 1;
                 
             }
-            //返回标签头
-            {
-                end = start;
-                return head;
-            }
-        }
-        public static Tag MakeFirstTag(int start,out int end,string htmlInput,string tag)
-        {
-            Tag ret;
-            //注释
-            if (tag == "!--")
-            {
-                var comment = new Regex(@"<!-- .+-->").Match(htmlInput, start);
-                if (comment.Success)
-                {
-                    end = comment.Index + comment.Length - 1;
-                    return new Tag()
-                    {
-                        contentL = comment.Value,
-                        contentR=comment.Value,
-                        head="!--",
-                        position=comment.Index
-                    };
-                }
-                else
-                {
-                    end = -1;
-                    return null;
-                }
-            }
-            //匹配第一个标签头
-            var head = PosFirstHead(start, out start, htmlInput, tag);
-            if (start == -1)
-            {
-                end = -1;
-                return null;
-            }
-            //脚本
-            if (tag == "script")
-            {
-                end = PosFirstEnd(start + 1, htmlInput, tag);
-                if (end != -1)
-                {
-                    ret = SplitNoCloseTag(head);
-                    ret.contentL = ret.contentR = htmlInput.Substring(start, end - start - 7);
-                    ret.position = start - head.Length+1;
-                    return ret;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            //匹配位置对应的标签尾
-            int index = start + 1;
-            int level = 0;
-            while (index != -1 && index < htmlInput.Length - 1)
-            {
-                if (htmlInput[index] != '<')
-                {
-                    index += 1;
-                    continue;
-                }
-                if (IsHead(index, htmlInput, tag))
-                {
-                    if (index + PosFirstHead(index, out end, htmlInput, tag).Length - 1 == end)
-                    {
-                        level += 1;
-                        index = end;
-                        continue;
-                    }
-                }
-                if (IsEnd(index, htmlInput, tag))
-                {
-                    if (level == 0)
-                    {
-                        end = PosFirstEnd(index, htmlInput, tag);
-                        ret= SplitTag(htmlInput.Substring(start - head.Length + 1, end - start + head.Length));
-                        ret.position = start - head.Length + 1;
-                        return ret;
-                    }
-                    else
-                    {
-                        index += tag.Length + 2;
-                        level -= 1;
-                    }
-                }
-                index += 1;
-            }
-            //返回标签头
-            {
-                end = start;
-                if (head[head.Length - 2] == '/')
-                {
-                    ret= SplitSpecialTag(head);
-                }
-                else
-                {
-                    ret= SplitNoCloseTag(head);
-                }
-                ret.position = start - head.Length + 1;
-                return ret;
-            }
-
-        }
-        //public static string CatchFirstTag(int start, out int end, string htmlInput)
-        //{
-
-        //}
-        static Tag SplitNoCloseTag(string tagContent)
-        {
-            Tag ret = new Tag();
-            int firstLeftIndex = tagContent.IndexOf('<');
-            int firstRightIndex = tagContent.IndexOf('>');
-            string head = tagContent.Substring(firstLeftIndex + 1, firstRightIndex - firstLeftIndex - 1);
-            var splittedHead = head.Split(new char[] { ' ' }, 2);
-            var splittedAttris = splittedHead.Count() < 2 ? new string[] { } : Regex.Split(splittedHead[1], @"(?<="")\s+");
-            ret.attris = new Dictionary<string, string>();
-            ret.head = splittedHead[0];
-            for (int i = 0; i < splittedAttris.Count(); i++)
-            {
-                var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
-                if (attri.Count() == 2)
-                {
-                    if (ret.attris.ContainsKey(attri[0]))
-                    {
-                        ret.attris[attri[0]] += " " + attri[1];
-                    }
-                    else
-                    {
-                        ret.attris.Add(attri[0], attri[1]);
-                    }
-                }
-            }
-            return ret;
-
-        }
-        /// <summary>
-        /// 分解没有尾标签，有尾斜杠标志的标签体<标签/>
-        /// </summary>
-        /// <param name="tagContent">标签块</param>
-        /// <returns>分解的标签类</returns>
-        static Tag SplitSpecialTag(string tagContent)
-        {
-            Tag ret = new Tag();
-            int firstLeftIndex = tagContent.IndexOf('<');
-            int firstRightIndex = tagContent.IndexOf('>');
-            string head = tagContent.Substring(firstLeftIndex + 1, firstRightIndex - firstLeftIndex - 2);
-            var splittedHead = head.Split(new char[] { ' ' }, 2);
-            var splittedAttris = splittedHead.Count() < 2 ? new string[] { } : Regex.Split(splittedHead[1], @"(?<="")\s+");
-            ret.attris = new Dictionary<string, string>();
-            ret.head = splittedHead[0];
-            for (int i = 0; i < splittedAttris.Count(); i++)
-            {
-                var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
-                if (attri.Count() == 2)
-                {
-                    if (ret.attris.ContainsKey(attri[0]))
-                    {
-                        ret.attris[attri[0]] += " " + attri[1];
-                    }
-                    else
-                    {
-                        ret.attris.Add(attri[0], attri[1]);
-                    }
-                }
-            }
-            return ret;
-        }
-        /// <summary>
-        /// 分解正常标签块
-        /// </summary>
-        /// <param name="tagContent">标签体</param>
-        /// <returns>分解的标签体</returns>
-        static Tag SplitTag(string tagContent)
-        {
-            if (tagContent == null) { return new Tag(); }
-            int firstLeftIndex = tagContent.IndexOf('<');
-            int firstRightIndex = tagContent.IndexOf('>');
-            int lastLeftIndex = tagContent.LastIndexOf('<');
-            int lastRightIndex = tagContent.LastIndexOf('>');
-            string lastname = tagContent.Substring(lastLeftIndex + 2, lastRightIndex - lastLeftIndex - 2);
-            string head = tagContent.Substring(firstLeftIndex + 1, firstRightIndex - firstLeftIndex - 1);
-            string content = tagContent.Substring(firstRightIndex + 1, lastLeftIndex - firstRightIndex - 1);
-            var splittedHead = head.Split(new char[] { ' ' }, 2);
-            var splittedAttris = splittedHead.Count() < 2 ? new string[] { } : Regex.Split(splittedHead[1], @"(?<="")\s+");
-            if (splittedHead[0].ToLower() != lastname.ToLower())
-            { MessageBox.Show("标签名首尾不一致！"); return null; }
-            Tag tag = new Tag();
-            tag.attris = new Dictionary<string, string>();
-            tag.head = splittedHead[0];
-            for (int i = 0; i < splittedAttris.Count(); i++)
-            {
-                var attri = splittedAttris[i].Split(new char[] { '=' }, 2);
-                if (attri.Count() == 2)
-                {
-                    if (tag.attris.ContainsKey(attri[0]))
-                    {
-                        tag.attris[attri[0]] += " " + attri[1];
-                    }
-                    else
-                    {
-                        tag.attris.Add(attri[0], attri[1]);
-                    }
-                }
-            }
-            if (!content.Contains('<'))
-            {
-                tag.contentL = tag.contentR = content;
-                return tag;
-            }
-            else
-            {
-                int start = content.IndexOf('<');
-                int end = content.LastIndexOf('>');
-                tag.contentL = start == 0 ? null : content.Substring(0, start);
-                tag.contentR = end == content.Count() - 1 ? null : content.Substring(end + 1, content.Count() - end - 2);
-                tag.TagsInTag = splittedTags(content.Substring(start, end - start + 1));
-            }
-            return tag;
-        }
-        static string MacthOpen(int start, out int end, string html)
-        {
-            Regex TagRegex = new Regex(@"<([^<>/\s]+)(\s+[^<>]+)*>");
-            var match = TagRegex.Match(html, start);
-            if (match.Success)
-            {
-                end = match.Index + match.Length;
-                return match.Groups[1].Value;
-            }
-            else
-            {
-                //注释
-                TagRegex = new Regex(@"<!-- .*-->");
-                match = TagRegex.Match(html, start);
-                if (match.Success)
-                {
-                    end = match.Index + match.Length;
-                    return match.Groups[1].Value;
-                }
-            }
-            end = -1;
+            ////返回标签头
+            //{
+            //    end = start;
+            //    return head;
+            //}
+            end = start;
             return null;
         }
-        /// <summary>
-        /// 分解当前级别并列标签体
-        /// </summary>
-        /// <param name="tags">网页内容</param>
-        /// <returns>分解的标签集</returns>
-        static Tag[] splittedTags(string tags)
+        string HTMLCode;
+        public TAGBlock SplitTo()
         {
-            List<Tag> ret = new List<Tag>();
-            int end;
-            var head = MacthOpen(0, out end, tags);
-            if (head == null) return ret.ToArray();
-            var close = MakeFirstTag(0, out end, tags,head);
-            if (close == null) return ret.ToArray();
-            ret.Add(close);
-            while (end != tags.Count() && end != -1)
-            {
-                int next;
-                head = MacthOpen(end, out next, tags);
-                if (head == null) break;
-                close = MakeFirstTag(end, out end, tags,head);
-                if (close == null) break;
-                ret.Add(close);
-            }
-            return ret.ToArray();
+            return SplitTo(this.HTMLCode);
         }
-        //static Tag SplitTag(string htmlContent, int startIndex,string head)
-        //{
-        //    if (!IsHead(startIndex, htmlContent, head)) return new Tag();
-        //    int end = -1;
-        //    var headContent=PosFirstHead(startIndex, out end,htmlContent, head);
-        //    if (end == -1) throw new Exception("网页内容不包括标签" + head);
-        //    var tag = SplitNoCloseTag(headContent);
-        //    tag.TagsInTag = SplittedTags(htmlContent, end);
-        //    return tag;
-        //}
-        //static Tag[] SplittedTags(string htmlContent, int startIndex)
-        //{
-
-        //}
+        public static TAGBlock SplitTo(string htmlOrgCode)
+        {
+            var TAGs=Regex.Matches(htmlOrgCode, @"<[^<>]+>", RegexOptions.Multiline);
+            TAGBlock startNode=new TAGBlock();
+            TAGBlock current = startNode;
+            int end = 0;
+            if(TAGs.Count==0)
+            {
+                TAGBlock.SetNULL(startNode, htmlOrgCode);
+                return startNode;
+            }
+            for(int i=0;i<TAGs.Count;i++)
+            {
+                if (TAGs[i].Index < end)
+                    continue;
+                if(TAGs[i].Index>end)
+                {
+                    TAGBlock.SetNULL
+                        (current, htmlOrgCode.Substring
+                        (end + 1, TAGs[i].Index - end - 1));
+                    current.NextBlock = new TAGBlock();
+                    current = current.NextBlock;
+                }
+                var type = TAG.GetType(TAGs[i].Value);
+                var name = TAG.GetName(TAGs[i].Value);
+                if (type == TAG.TAGType.PUREEND)
+                {
+                    //throw new Exception("结构错误！");
+                    end = TAGs[i].Index + TAGs[i].Length - 1;
+                    continue;
+                }
+                else if (type == TAG.TAGType.FULLTAG)
+                {
+                    current.head = name;
+                    current.NextBlock = new TAGBlock();
+                    current = current.NextBlock;
+                    end = TAGs[i].Index + TAGs[i].Length - 1;
+                }
+                else
+                {
+                    current.head = name;
+                    var InsideContent = CatchFirstTag(TAGs[i].Index, out end, htmlOrgCode, name);
+                    if (InsideContent != null)
+                    {
+                        current.FirstInside = SplitTo(InsideContent);
+                        current.NextBlock = new TAGBlock();
+                        current = current.NextBlock;
+                    }
+                    else
+                    {
+                        current.NextBlock = new TAGBlock();
+                        current = current.NextBlock;
+                        end = TAGs[i].Index + TAGs[i].Length - 1;
+                    }
+                }
+            }
+            if(end<htmlOrgCode.Length-1)
+            {
+                TAGBlock.SetNULL
+                    (current, htmlOrgCode.Substring(end + 1, htmlOrgCode.Length - end - 2));
+            }
+            return startNode;
+        }
     }
-    /// <summary>
-    /// 
-    /// </summary>
-    public class Tag
+    public class TAGBlock
     {
-        public Tag() { }
-        public int position { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
+        public static void SetNULL(TAGBlock block,string content)
+        {
+            if (block == null)
+                block = new TAGBlock();
+            block.head = "NULL";
+            block.content = content;
+        }
+        public TAGBlock() { }
         public string head { get; set; }
-        public Tag[] TagsInTag { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string contentL { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string contentR { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public Dictionary<string, string> attris { get; set; }
+        public string content { get; set; }
+        public TAGBlock NextBlock { get; set; }
+        public TAGBlock FirstInside { get; set; }
+    }
+    public class TAG
+    {
+        public enum TAGType
+        {
+            PUREHEAD,
+            PUREEND,
+            FULLTAG
+        }
+        public static TAGType GetType(string InputTAG)
+        {
+            if (!InputTAG[0].Equals('<') ||
+                !InputTAG[InputTAG.Length - 1].Equals('>'))
+                throw new Exception("Not a TAG!");
+            if (InputTAG[1].Equals('/'))
+                return TAGType.PUREEND;
+            else if (InputTAG[InputTAG.Length - 2].Equals('/'))
+                return TAGType.FULLTAG;
+            else return TAGType.PUREHEAD;
+        }
+        public static string GetName(string InputTAG)
+        {
+            return InputTAG.Split
+                (new char[] { '<', '>', '/', ' ' }, 
+                StringSplitOptions.RemoveEmptyEntries)[0];
+        }
     }
 
 }

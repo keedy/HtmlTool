@@ -11,7 +11,7 @@ namespace HtmlTool
 {
     class TagTree:TextBox
     {
-        public Tag[] MyTag;
+        public TAGBlock[] MyTag;
         const string tagPattern = @"(?<tag>^(?<front>([^<>]+\.){0,})(?<behind>[^<>]+)$)";
         protected override void OnPreviewMouseRightButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -43,34 +43,22 @@ namespace HtmlTool
 
             }
         }
-        ContextMenu GetObjectMenu(Tag[] objs)
+        ContextMenu GetObjectMenu(TAGBlock[] objs)
         {
             ContextMenu menu = new ContextMenu();
             List<string> menuString = new List<string>();
             foreach(var tag in objs)
             {
-                if(tag.contentL!=null&&tag.contentL.Length>0)
-                {
-                    menuString.Add("contentL");
-                }
-                if(tag.contentR!=null&&tag.contentR.Length>0)
-                {
-                    menuString.Add("contentR");
-                }
-                if(tag.attris!=null)
-                {
-                    foreach(var attri in tag.attris)
-                    {
-                        menuString.Add(attri.Key);
-                    }
-                }
-                if(tag.TagsInTag!=null)
-                {
-                    foreach(var intag in tag.TagsInTag)
-                    {
-                        menuString.Add(intag.head);
-                    }
-                }
+                //if(tag.contentL!=null&&tag.contentL.Length>0)
+                //{
+                //    menuString.Add("contentL");
+                //}
+                //if(tag.contentR!=null&&tag.contentR.Length>0)
+                //{
+                //    menuString.Add("contentR");
+                //}
+                if (tag.content != null)
+                    menuString.Add("content");
             }
             menuString=menuString.Distinct().ToList();
             foreach(var s in menuString)
@@ -88,29 +76,19 @@ namespace HtmlTool
             }
             return menu;
         }
-        Tag[] GetTagObject(Tag[] nodes, string Ptr)
+        TAGBlock[] GetTagObject(TAGBlock[] nodes, string Ptr)
         {
-            List<Tag> TagsIn = new List<Tag>();
-            List<Tag> TagsOut = new List<Tag>();
+            List<TAGBlock> TagsIn = new List<TAGBlock>();
+            List<TAGBlock> TagsOut = new List<TAGBlock>();
             TagsIn = nodes.ToList();
             foreach(var tag in TagsIn)
             {
-                if(tag.TagsInTag!=null)
-                {
-                    foreach(var intag in tag.TagsInTag)
-                    {
-                        if(intag.head==Ptr)
-                        {
-                            TagsOut.Add(intag);
-                        }
-                    }
-                }
             }
             return TagsOut.ToArray();
         }
-        Tag[] GetTagObject(Tag[] nodes, string[] ptrs)
+        TAGBlock[] GetTagObject(TAGBlock[] nodes, string[] ptrs)
         {
-            Tag[] temp=nodes;
+            TAGBlock[] temp=nodes;
             foreach(var ptr in ptrs)
             {
                 temp = GetTagObject(temp, ptr);
@@ -126,7 +104,7 @@ namespace HtmlTool
             foreach (var tag in MyTag)
             {
                 pattern.TAGS.Add(GetTagObject
-                    (new Tag[] { tag },
+                    (new TAGBlock[] { tag },
                     TagMatch.Groups["front"].Value.Split('.').Where(x => x.Length > 0).ToArray()));
             }
             if (pattern.TAGS == null)
@@ -146,9 +124,9 @@ namespace HtmlTool
     {
         public TagPattern()
         {
-            TAGS = new List<Tag[]>();
+            TAGS = new List<TAGBlock[]>();
         }
-        public List<Tag[]> TAGS;
+        public List<TAGBlock[]> TAGS;
         public string contentPtr;
         public string PatternString;
         public bool IsIndex { get; set; }

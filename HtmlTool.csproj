@@ -62,8 +62,6 @@
       <DependentUpon>RegexCtl.xaml</DependentUpon>
     </Compile>
     <Compile Include="SplitHtml.cs" />
-    <Compile Include="SplittedHtml.cs" />
-    <Compile Include="TagTree.cs" />
     <Compile Include="WebHandle.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
