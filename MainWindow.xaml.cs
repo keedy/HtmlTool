@@ -38,7 +38,6 @@ namespace HtmlTool
             else
             {
                 ShowHTMLTree(tags[0]);
-                this.AddTagBox.MyTag = tags;
             }
 
         }
@@ -98,15 +97,32 @@ namespace HtmlTool
         private void SaveToFile_Click(object sender, RoutedEventArgs e)
         {
             string path = System.IO.Path.Combine(filePath.Text, fileNameTB.Text);
-            System.IO.File.WriteAllLines(path, GetEditTreeString(editTree.Items), Encoding.UTF8);
+            System.IO.File.WriteAllLines(path, GetEditTreeString());
         }
-        string[] GetEditTreeString(ItemCollection Items)
+        string GetEditTreeString(TAGBlock block)
         {
-            throw new Exception("未完待续");
+            string ret=null;
+            if (block.head=="NULL")
+                ret+= block.content;
+            else
+            if(block.FirstInside!=null)
+            {
+                ret+=GetEditTreeString(block.FirstInside);
+            }
+            if(block.NextBlock!=null)
+            {
+                ret += GetEditTreeString(block.NextBlock);
+            }
+            return ret==null?" ":ret;
         }
         public string[] GetEditTreeString()
         {
-            return GetEditTreeString(editTree.Items);
+            //return GetEditTreeString(editTree.Items);
+            string[] ret=new string[MyTags.Length];
+            for (int i = 0; i < MyTags.Length; i++)
+                ret[i] = GetEditTreeString(MyTags[i]);
+            return ret;
+
         }
         private void ViewBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -114,7 +130,7 @@ namespace HtmlTool
             ScrollViewer view = new ScrollViewer();
 
             TextBlock block = new TextBlock();
-            foreach (var txt in GetEditTreeString(editTree.Items))
+            foreach (var txt in GetEditTreeString())
             {
                 block.Text += txt;
             }
@@ -127,7 +143,9 @@ namespace HtmlTool
 
         private void Start_Click(object sender, RoutedEventArgs e)
         {
-            var splitted = Regex.Split(links.Text.Trim(), @"\s");
+            var splitted = links.Text.Split
+                (new char[] { ' ', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                //Regex.Split(links.Text.Trim(), @"\s");
             WebHandle handle = new WebHandle();
             List<TAGBlock> tags = new List<TAGBlock>();
             foreach (var link in splitted)

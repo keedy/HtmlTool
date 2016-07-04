@@ -27,7 +27,7 @@ namespace HtmlTool
             try
             {
                 Stream data = client.OpenRead(url);
-                StreamReader reader = new StreamReader(data);
+                StreamReader reader = new StreamReader(data,true);
                 string s = reader.ReadToEnd();
                 data.Close();
                 reader.Close();
