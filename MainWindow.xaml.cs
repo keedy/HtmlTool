@@ -154,7 +154,7 @@ namespace HtmlTool
                 try
                 {
                     var page =  SplitHtml.SplitTo(handle.GetHTMLPage
-                        (RootUrl == null ? link : RootUrl + link));
+                        (RootUrl == null ? link : RootUrl + link,null));
                     if (page != null) tags.Add(page);
                 }
                 catch (Exception ex)
