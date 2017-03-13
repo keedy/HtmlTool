@@ -78,11 +78,11 @@ namespace HtmlTool
             var index = htmlInput.ToLower().IndexOf("</" + head.ToLower() + ">",start);
             if(index==-1)
             {
-                index = htmlInput.ToLower().IndexOf("</" + head.ToLower() + ">", start);
-                if (index == -1)
+                //index = htmlInput.ToLower().IndexOf("</" + head.ToLower() + ">", start);
+                //if (index == -1)
                     return index;
-                else
-                    return index + head.Length + 2;
+                //else
+                //    return index + head.Length + 2;
             }
             return index + head.Length + 2;
         }
@@ -153,6 +153,7 @@ namespace HtmlTool
                     {
                         index += tag.Length + 2;
                         level -= 1;
+                        continue;
                     }
                 }
                 index += 1;
@@ -173,10 +174,10 @@ namespace HtmlTool
         }
         public static TAGBlock SplitTo(string htmlOrgCode)
         {
-            var TAGs=Regex.Matches(htmlOrgCode, @"<[^<>]+>", RegexOptions.Multiline);
+            var TAGs=Regex.Matches(htmlOrgCode, @"<[^<>]+>", RegexOptions.None);
             TAGBlock startNode=new TAGBlock();
             TAGBlock current = startNode;
-            int end = 0;
+            int end = -1;
             if(TAGs.Count==0)
             {
                 TAGBlock.SetNULL(startNode, htmlOrgCode);
@@ -204,14 +205,16 @@ namespace HtmlTool
                 }
                 else if (type == TAG.TAGType.FULLTAG)
                 {
-                    current.head = name;
+                    current.Name = name;
+                    current.OrgHead = TAGs[i].Value;
                     current.NextBlock = new TAGBlock();
                     current = current.NextBlock;
                     end = TAGs[i].Index + TAGs[i].Length - 1;
                 }
                 else
                 {
-                    current.head = name;
+                    current.Name = name;
+                    current.OrgHead = TAGs[i].Value;
                     var InsideContent = CatchFirstTag(TAGs[i].Index, out end, htmlOrgCode, name);
                     if (InsideContent != null)
                     {
@@ -234,6 +237,83 @@ namespace HtmlTool
             }
             return startNode;
         }
+        //处理树状内容版块
+        public static Dictionary<string,string> GetLinks(TAGBlock block)
+        {
+            Dictionary<string, string> Links2Title = new Dictionary<string, string>();
+            if (block.Name == null) return Links2Title;
+            if(block.Name.Equals("link",StringComparison.CurrentCultureIgnoreCase)
+                ||block.Name.Equals("a",StringComparison.CurrentCultureIgnoreCase))
+            {
+                var properties = TAG.GetProperties(block.OrgHead);
+                if (properties != null)
+                {
+                    if (properties.ContainsKey("href") && properties.ContainsKey("title"))
+                    {
+                        Links2Title.Add(properties["href"], properties["title"]);
+                    }
+                }
+            }
+            if (block.FirstInside != null)
+            {
+                foreach(var innerL in GetLinks(block.FirstInside))
+                {
+                    if (!Links2Title.ContainsKey(innerL.Key))
+                        Links2Title.Add(innerL.Key, innerL.Value);
+                }
+            }
+            if (block.NextBlock != null)
+            {
+                foreach (var nextL in GetLinks(block.NextBlock))
+                {
+                    if (!Links2Title.ContainsKey(nextL.Key))
+                        Links2Title.Add(nextL.Key, nextL.Value);
+                }
+            }
+            return Links2Title;
+        }
+
+        public static string GetAllInsideContent(TAGBlock block)
+        {
+            string ret = string.Empty;
+            if (block.Name == null) return ret;
+            ret = string.Format("{0}{1}", ret, block.content);
+            if (block.FirstInside != null)
+                ret = string.Format("{0}{1}", ret, GetAllContent(block.FirstInside));
+            return ret;
+        }
+        public static string GetAllContent(TAGBlock block)
+        {
+            string ret = string.Empty;
+            if (block.Name == null) return ret;
+            ret = string.Format("{0}{1}", ret, block.content);
+            if (block.FirstInside != null)
+                ret = string.Format("{0}{1}", ret, GetAllContent(block.FirstInside));
+            if(block.NextBlock!=null)
+                ret = string.Format("{0}{1}", ret, GetAllContent(block.NextBlock));
+            return ret;
+        }
+        public static string FindTXTContent(TAGBlock block)
+        {
+            if (block == null || block.Name == null)
+                return string.Empty;
+            string ret = string.Empty;
+            if (block.Name == "title"
+                || block.Name == "p")
+            {
+                ret += (SplitHtml.GetAllInsideContent(block) + "\n");
+            }
+            else if (block.FirstInside != null)
+            {
+                ret += FindTXTContent(block.FirstInside);
+            }
+            if (block.NextBlock != null)
+            {
+                ret += FindTXTContent(block.NextBlock);
+            }
+            return ret;
+        }
+
     }
     public class TAGBlock
     {
@@ -241,14 +321,18 @@ namespace HtmlTool
         {
             if (block == null)
                 block = new TAGBlock();
-            block.head = "NULL";
+            block.Name = "NULL";
             block.content = content;
         }
         public TAGBlock() { }
-        public string head { get; set; }
+        public string Name { get; set; }
         public string content { get; set; }
         public TAGBlock NextBlock { get; set; }
         public TAGBlock FirstInside { get; set; }
+        public string OrgHead { get; set; }
+        //public byte Flags { get; set; }
+        //public  const byte body = 0x01;
+        //public  const byte Index = 0x02;
     }
     public class TAG
     {
@@ -274,6 +358,22 @@ namespace HtmlTool
             return InputTAG.Split
                 (new char[] { '<', '>', '/', ' ' }, 
                 StringSplitOptions.RemoveEmptyEntries)[0];
+        }
+        public static Dictionary<string,string> GetProperties(string InputTAG)
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            var items = Regex.Matches(InputTAG, @"\s+(?<pname>[a-z]+)=\""(?<pvalue>[^\""]+)\""", RegexOptions.Singleline);
+            foreach(Match i in items)
+            {
+                if(i.Success)
+                {
+                    properties.Add(i.Groups["pname"].Value,i.Groups["pvalue"].Value);
+                }
+            }
+            if (properties.Count == 0)
+                return null;
+            else
+                return properties;
         }
     }
 

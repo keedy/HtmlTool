@@ -1,0 +1,13 @@
+﻿<Window x:Class="HtmlTool.ViewTreeWin"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ViewTreeWin" Height="500" Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBlock Height="25" Margin="5" Name="TextBlock_title"></TextBlock>
+        <TreeView Grid.Row="1" Name="TreeView_WebPage"></TreeView>
+    </Grid>
+</Window>

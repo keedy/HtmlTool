@@ -58,10 +58,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ContentHandle.cs" />
     <Compile Include="RegexCtl.xaml.cs">
       <DependentUpon>RegexCtl.xaml</DependentUpon>
     </Compile>
     <Compile Include="SplitHtml.cs" />
+    <Compile Include="ViewTreeWin.xaml.cs">
+      <DependentUpon>ViewTreeWin.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WebHandle.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -84,6 +88,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Resource\RoundTextBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ViewTreeWin.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

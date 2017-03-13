@@ -10,7 +10,7 @@ namespace HtmlTool
 {
     public class WebHandle
     {
-        public WebHandle()
+        static WebHandle()
         {
             client = new WebClient();
 
@@ -21,15 +21,15 @@ namespace HtmlTool
                 ("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
 
         }
-        WebClient client;
-       public  string GetHTMLPage(string url,string charSet)
+        static WebClient client;
+        public static string GetHTMLPage(string url,string charSet)
         {
             try
             {
                 var myDataBuffer = client.DownloadData(url);
                 var strWebData = Encoding.Default.GetString(myDataBuffer);
                 //获取网页字符编码描述信息
-                Match charSetMatch = Regex.Match(strWebData, "<meta([^<]*)charset=([^<]*)\"", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                Match charSetMatch = Regex.Match(strWebData, "<meta([^<]*)charset=\"?([^<]*)\"", RegexOptions.IgnoreCase | RegexOptions.Multiline);
                 string webCharSet = charSetMatch.Groups[2].Value;
                 if (charSet == null || charSet == "")
                 {
@@ -51,7 +51,7 @@ namespace HtmlTool
             }
             catch { return null; }
         }
-        public string GetHTMLPage(string url)
+       public static string GetHTMLPage(string url)
        {
            try
            {

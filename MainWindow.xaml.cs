@@ -25,194 +25,126 @@ namespace HtmlTool
         public MainWindow()
         {
             InitializeComponent();
-            SameLevel.IsThreeState = false;
-            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
-        public void Init(TAGBlock[] tags)
-        {
-            this.MyTags = tags;
-            if (tags.Count() == 0)
-            {
-                MessageBox.Show("空数据！");
-            }
-            else
-            {
-                ShowHTMLTree(tags[0]);
-            }
 
-        }
-        TAGBlock[] MyTags;
-        string RootUrl = null;
-        public void ShowHTMLTree(TAGBlock HtmlTag)
+        private void GetIndexesLink_Click(object sender, RoutedEventArgs e)
         {
-            HtmlTree.Items.Clear();
-            ProcessHTMLTag(HtmlTag, null);
-        }
-        void ProcessHTMLTag(TAGBlock HtmlTag,
-            TreeViewItem previewItem)
-        {
-            if (HtmlTag == null) return;
-            TreeViewItem item = new TreeViewItem();
-            item.Header = HtmlTag.head;
-            item.IsExpanded = true;
-            if (previewItem == null)
+            this.Cursor = Cursors.Wait;
+            var matchLinks=Regex.Matches(this.TEXTBOX_Links.Text, @"\s*.+(\s+|$)");
+            foreach(Match link in matchLinks)
             {
-                HtmlTree.Items.Add(item);
-            }
-            else
-            {
-                previewItem.Items.Add(item);
-                if (HtmlTag.content != null)
+                if(link.Success)
                 {
-                    string header = null;
-                    HtmlTag.content.ToList().ForEach(x => header += x+"\n");
-                    item.Items.Add(new TreeViewItem() { Header = header });
+                    var content = new ContentHandle(link.Value.Trim());
+                    if (WebHandle.getRootUrl(link.Value.Trim()) == null)
+                    {
+                        if (MessageBox.Show(link.Value.Trim() + "链接格式错误", "是否继续", MessageBoxButton.YesNo, MessageBoxImage.Question)
+                            == MessageBoxResult.Yes)
+                            continue;
+                        else
+                            return;
+                    }
+                    if(content.WEBPAGE==null)
+                    {
+                        if (MessageBox.Show(link.Value.Trim()+"无法获取内容", "是否继续", MessageBoxButton.YesNo, MessageBoxImage.Question)
+                            == MessageBoxResult.Yes)
+                            continue;
+                        else
+                            return;
+                    }
+                    var links = SplitHtml.GetLinks(content.contentTree);
+                    //TEXTBOX_Links.Clear();
+                    foreach(var l in links)
+                    {
+                        TEXTBOX_View.AppendText
+                            ((string.IsNullOrEmpty(WebHandle.getRootUrl(l.Key)) ?
+                            content.RootUrl+l.Key : l.Key )+ "\n");
+                    }
                 }
             }
-            if (HtmlTag.FirstInside != null)
+            this.Cursor = Cursors.Arrow;
+        }
+
+        private void GetTXT_Click(object sender, RoutedEventArgs e)
+        {
+            this.Cursor = Cursors.Wait;
+            TEXTBOX_View.Clear();
+            var matchLinks = Regex.Matches(this.TEXTBOX_Links.Text, @"\s*.+(\s+|$)");
+            foreach (Match link in matchLinks)
             {
-                ProcessHTMLTag(HtmlTag.FirstInside, item);
-            }
-            if(HtmlTag.NextBlock!=null)
-            {
-                ProcessHTMLTag(HtmlTag.NextBlock, previewItem);
-            }
-        }
-
-        private void AddBtn_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void deleteBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (editTree.SelectedItem == null) return;
-            editTree.Items.Remove(editTree.SelectedItem);
-        }
-
-        private void deleteAllBtn_Click(object sender, RoutedEventArgs e)
-        {
-            editTree.Items.Clear();
-        }
-
-        private void SaveToFile_Click(object sender, RoutedEventArgs e)
-        {
-            string path = System.IO.Path.Combine(filePath.Text, fileNameTB.Text);
-            System.IO.File.WriteAllLines(path, GetEditTreeString());
-        }
-        string GetEditTreeString(TAGBlock block)
-        {
-            string ret=null;
-            if (block.head=="NULL")
-                ret+= block.content;
-            else
-            if(block.FirstInside!=null)
-            {
-                ret+=GetEditTreeString(block.FirstInside);
-            }
-            if(block.NextBlock!=null)
-            {
-                ret += GetEditTreeString(block.NextBlock);
-            }
-            return ret==null?" ":ret;
-        }
-        public string[] GetEditTreeString()
-        {
-            //return GetEditTreeString(editTree.Items);
-            string[] ret=new string[MyTags.Length];
-            for (int i = 0; i < MyTags.Length; i++)
-                ret[i] = GetEditTreeString(MyTags[i]);
-            return ret;
-
-        }
-        private void ViewBtn_Click(object sender, RoutedEventArgs e)
-        {
-            Window win = new Window();
-            ScrollViewer view = new ScrollViewer();
-
-            TextBlock block = new TextBlock();
-            foreach (var txt in GetEditTreeString())
-            {
-                block.Text += txt;
-            }
-            view.Content = block;
-            win.Content = view;
-            win.Height = 250;
-            win.Width = 300;
-            win.Show();
-        }
-
-        private void Start_Click(object sender, RoutedEventArgs e)
-        {
-            var splitted = links.Text.Split
-                (new char[] { ' ', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                //Regex.Split(links.Text.Trim(), @"\s");
-            WebHandle handle = new WebHandle();
-            List<TAGBlock> tags = new List<TAGBlock>();
-            foreach (var link in splitted)
-            {
-                this.Cursor = Cursors.Wait;
-                try
+                if (link.Success)
                 {
-                    var page =  SplitHtml.SplitTo(handle.GetHTMLPage
-                        (RootUrl == null ? link : RootUrl + link,null));
-                    if (page != null) tags.Add(page);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message + ex.StackTrace);
-
-                }
-                finally
-                {
-                    this.Cursor = Cursors.Hand;
+                    var content = new ContentHandle(link.Value.Trim());
+                    if (WebHandle.getRootUrl(link.Value.Trim()) == null)
+                    {
+                        if (MessageBox.Show(link.Value.Trim() + "链接格式错误", "是否继续", MessageBoxButton.YesNo, MessageBoxImage.Question)
+                            == MessageBoxResult.Yes)
+                            continue;
+                        else
+                            return;
+                    }
+                    if (content.WEBPAGE == null)
+                    {
+                        if (MessageBox.Show(link.Value.Trim() + "无法获取内容", "是否继续", MessageBoxButton.YesNo, MessageBoxImage.Question)
+                            == MessageBoxResult.Yes)
+                            continue;
+                        else
+                            return;
+                    }
+                    string append=SplitHtml.FindTXTContent(content.contentTree);
+                    this.Dispatcher.BeginInvoke(new Action<string>(delegate(string Toappend)
+                        {
+                            TEXTBOX_View.AppendText(Toappend);
+                        }),append);
+                    //TEXTBOX_View.AppendText(SplitHtml.FindTXTContent(content.contentTree));
                 }
             }
-            Init(tags.ToArray());
+            this.Cursor = Cursors.Arrow;
         }
 
 
-
-        private void RegexEdit_Click(object sender, RoutedEventArgs e)
+        private void ViewTree_Click(object sender, RoutedEventArgs e)
         {
-            RegexCtl ctl = new RegexCtl(links.Text);
-            ctl.click += delegate()
+            this.Cursor = Cursors.Wait;
+            var matchLink = Regex.Match(this.TEXTBOX_Links.Text, @"\s*http(s?):\/\/.+(\s+|$)");
+            if (matchLink.Success)
             {
-                this.links.Text = ctl.OutPut;
-            };
-            ctl.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            ctl.ShowDialog();
+                ViewTreeWin win = new ViewTreeWin(matchLink.Value.Trim());
+                win.Owner = this;
+                win.Icon = win.Owner.Icon;
+                win.Show();
+            }
+            this.Cursor = Cursors.Arrow;
         }
 
-        private void editTree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void Save2File_Click(object sender, RoutedEventArgs e)
         {
-            //if (editTree.SelectedItem == null)
-            //    return;
-            //var tagPattern = (editTree.SelectedItem as TreeViewItem).Tag as TagPattern;
-            //ContextMenu menu = new ContextMenu();
-            //if (tagPattern.IsIndex)
-            //{
-            //    MenuItem item = new MenuItem();
-            //    item.Header = "取消目录设置";
-            //    item.Click += delegate(object sender1, RoutedEventArgs e1)
-            //    {
-            //        tagPattern.IsIndex = false;
-            //        (editTree.SelectedItem as TreeViewItem).Foreground = Brushes.Black;
-            //    };
-            //    menu.Items.Add(item);
-            //}
-            //else
-            //{
-            //    MenuItem item = new MenuItem();
-            //    item.Header = "设置为目录";
-            //    item.Click += delegate(object sender1, RoutedEventArgs e1)
-            //    {
-            //        tagPattern.IsIndex = true;
-            //        (editTree.SelectedItem as TreeViewItem).Foreground = Brushes.Purple;
-            //    };
-            //    menu.Items.Add(item);
-            //}
-            //this.ContextMenu = menu;
-
+            Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();
+            dialog.Filter = "Text File(.txt)|*.txt";
+            dialog.DefaultExt = "txt";
+            dialog.RestoreDirectory = true;
+            if(dialog.ShowDialog(this)==true)
+            {
+                using (var stream = dialog.OpenFile())
+                {
+                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter(stream))
+                        sw.Write(TEXTBOX_View.Text);
+                }
+                MessageBox.Show("保存成功" + dialog.FileName);
+            }
         }
+
+
+        //private void RegexEdit_Click(object sender, RoutedEventArgs e)
+        //{
+        //    RegexCtl ctl = new RegexCtl(links);
+        //    ctl.click += delegate()
+        //    {
+        //        this.links.Text = ctl.OutPut;
+        //    };
+        //    ctl.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        //    ctl.ShowDialog();
+        //}
+
     }
 }

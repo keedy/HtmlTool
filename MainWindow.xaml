@@ -11,7 +11,7 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Margin="5">
+    <!--<Grid Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
@@ -41,7 +41,7 @@
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" CornerRadius="10" BorderBrush="Brown" BorderThickness="3">
-                    <TreeView Name="editTree" Grid.Row="0" MinHeight="100" PreviewMouseRightButtonDown="editTree_PreviewMouseRightButtonDown" BorderBrush="Brown"></TreeView>
+                    --><!--<TreeView Name="editTree" Grid.Row="0" MinHeight="100" PreviewMouseRightButtonDown="editTree_PreviewMouseRightButtonDown" BorderBrush="Brown"></TreeView>--><!--
                 </Border>
                     <Grid Grid.Row="1" >
                     <Grid.RowDefinitions>
@@ -72,6 +72,49 @@
                 </Grid>
 
             </Grid>
+        </Grid>
+    </Grid>-->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition MinHeight="100" MaxHeight="150"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Menu>
+            <MenuItem Header="提取目录链接" Name="GetIndexesLink" Click="GetIndexesLink_Click"></MenuItem>
+            <MenuItem Header="提取内容" Name="GetLinkContent">
+                <MenuItem Header="提取成txt" Name="GetTXT" Click="GetTXT_Click"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="查看树" Name="ViewTree" Click="ViewTree_Click"></MenuItem>
+            <MenuItem Header="设置"></MenuItem>
+        </Menu>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition Width="100"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <TextBox ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                     ScrollViewer.VerticalScrollBarVisibility="Visible"
+                     Margin="5" BorderBrush="Black" BorderThickness="2" 
+                     Name="TEXTBOX_Links" TextWrapping="Wrap" AcceptsReturn="True"></TextBox>
+            <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Bottom">
+                <Button Height="25" Width="75" Margin="5">正则编辑</Button>
+                <Button Height="25" Width="75" Margin="5">属性</Button>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition MinWidth="100" Width="auto"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <TextBox BorderBrush="Black" BorderThickness="2" Margin="5" IsReadOnly="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Visible"  TextWrapping="Wrap"
+                     Name="TEXTBOX_View">
+            </TextBox>
+            <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Bottom">
+                <Button Name="RegexEditor" Margin="5">正则编辑</Button>
+                <Button Name="Save2File" Margin="5" Click="Save2File_Click">保存</Button>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
