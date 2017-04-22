@@ -86,7 +86,7 @@
                 <MenuItem Header="提取成txt" Name="GetTXT" Click="GetTXT_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="查看树" Name="ViewTree" Click="ViewTree_Click"></MenuItem>
-            <MenuItem Header="设置"></MenuItem>
+            <MenuItem Header="设置" Click="SetMenuItem_Click"></MenuItem>
         </Menu>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

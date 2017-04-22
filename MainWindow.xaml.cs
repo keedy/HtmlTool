@@ -91,6 +91,7 @@ namespace HtmlTool
                         else
                             return;
                     }
+                    SplitHtml.RefreshUserSettings();
                     string append=SplitHtml.FindTXTContent(content.contentTree);
                     this.Dispatcher.BeginInvoke(new Action<string>(delegate(string Toappend)
                         {
@@ -132,6 +133,12 @@ namespace HtmlTool
                 }
                 MessageBox.Show("保存成功" + dialog.FileName);
             }
+        }
+
+        private void SetMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SettingWin win = new SettingWin();
+            win.ShowDialog();
         }
 
 

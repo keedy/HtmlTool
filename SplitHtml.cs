@@ -276,7 +276,12 @@ namespace HtmlTool
         public static string GetAllInsideContent(TAGBlock block)
         {
             string ret = string.Empty;
-            if (block.Name == null) return ret;
+            if (block.Name == null||Excluded.Contains(block.Name))
+                return ret;
+            if(Titles.ContainsKey(block.Name))
+            {
+                ret = DataResource.GetMarkFormatted(Titles[block.Name]);
+            }
             ret = string.Format("{0}{1}", ret, block.content);
             if (block.FirstInside != null)
                 ret = string.Format("{0}{1}", ret, GetAllContent(block.FirstInside));
@@ -286,9 +291,16 @@ namespace HtmlTool
         {
             string ret = string.Empty;
             if (block.Name == null) return ret;
-            ret = string.Format("{0}{1}", ret, block.content);
-            if (block.FirstInside != null)
-                ret = string.Format("{0}{1}", ret, GetAllContent(block.FirstInside));
+            if (!Excluded.Contains(block.Name))
+            {
+                if (Titles.ContainsKey(block.Name))
+                {
+                    ret = DataResource.GetMarkFormatted(Titles[block.Name]);
+                }
+                ret = string.Format("{0}{1}", ret, block.content);
+                if (block.FirstInside != null)
+                    ret = string.Format("{0}{1}", ret, GetAllContent(block.FirstInside));
+            }
             if(block.NextBlock!=null)
                 ret = string.Format("{0}{1}", ret, GetAllContent(block.NextBlock));
             return ret;
@@ -298,12 +310,12 @@ namespace HtmlTool
             if (block == null || block.Name == null)
                 return string.Empty;
             string ret = string.Empty;
-            if (block.Name == "title"
-                || block.Name == "p")
+
+            if (Included.Contains( block.Name)&&!Excluded.Contains(block.Name))
             {
-                ret += (SplitHtml.GetAllInsideContent(block) + "\n");
+                ret += (SplitHtml.GetAllInsideContent(block));
             }
-            else if (block.FirstInside != null)
+            else if (block.FirstInside != null&&!Excluded.Contains(block.Name))
             {
                 ret += FindTXTContent(block.FirstInside);
             }
@@ -313,7 +325,23 @@ namespace HtmlTool
             }
             return ret;
         }
-
+        static List<string> Included=new List<string>();
+        static List<string> Excluded=new List<string>();
+        static Dictionary<string, string> Titles=new Dictionary<string,string>();
+        public static void RefreshUserSettings()
+        {
+            Included.Clear();
+            Excluded.Clear();
+            Titles.Clear();
+            foreach(var item in CustomAppSettings.Default.contentSettings)
+            {
+                if (item.ContentTagAttached == TagAttached.提取)
+                    Included.Add(item.TagName);
+                else if (item.ContentTagAttached == TagAttached.排除)
+                    Excluded.Add(item.TagName);
+                else Titles[item.TagName] = item.MarkKey;
+            }
+        }
     }
     public class TAGBlock
     {
